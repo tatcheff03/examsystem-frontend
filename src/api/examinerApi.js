@@ -37,7 +37,3 @@ export async function getTestsByExaminer(examinerId) {
   return response.json();
 }
 
-export async function getTestPapersForTest(testId) {
-  const response = await fetch(`${BASE_URL}/test-papers/${testId}`);
-  return response.json();
-}

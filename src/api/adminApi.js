@@ -1,12 +1,17 @@
 const BASE_URL = "http://localhost:8080/admin";
 
-export async function sendInvite(email) {
+export async function sendInvite(email, testId) {
   const response = await fetch(`${BASE_URL}/send-invite`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, testId }),
   });
   return response.text();
+}
+
+export async function getAllAdmins() {
+  const response = await fetch(`${BASE_URL}/list`); // or whichever endpoint returns all admins
+  return response.json();
 }
 
 export async function registerAdmin(admin) {
