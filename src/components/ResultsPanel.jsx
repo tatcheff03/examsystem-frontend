@@ -21,10 +21,24 @@ export function ResultsPanel() {
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
-            <TextField label="Student ID" name="studentId" value={resultQuery.studentId} onChange={handleChange} fullWidth type="number" />
+            <TextField
+              label="Student ID"
+              name="studentId"
+              value={resultQuery.studentId}
+              onChange={handleChange}
+              fullWidth
+              type="number"
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Test ID" name="testId" value={resultQuery.testId} onChange={handleChange} fullWidth type="number" />
+            <TextField
+              label="Test ID"
+              name="testId"
+              value={resultQuery.testId}
+              onChange={handleChange}
+              fullWidth
+              type="number"
+            />
           </Grid>
           <Grid item xs={12}>
             <Button type="submit" variant="contained" fullWidth>Get Result</Button>
@@ -35,8 +49,16 @@ export function ResultsPanel() {
         <List sx={{ mt: 3 }}>
           <ListItem divider>
             <ListItemText
-              primary={`Student ${result.studentId} - Grade: ${result.grade}`}
-              secondary={`Marks: ${result.marks} | Test ID: ${result.testId}`}
+              primary={
+                <Typography sx={{ color: '#1565c0', fontWeight: 500 }}>
+                  {`Student:`}&nbsp;{result.studentName} - Grade: {result.grade}
+                </Typography>
+              }
+              secondary={
+                <Typography sx={{ color: 'text.secondary' }}>
+                  {`Marks: ${result.marks} | Test ID: ${result.testId}`}
+                </Typography>
+              }
             />
           </ListItem>
         </List>
