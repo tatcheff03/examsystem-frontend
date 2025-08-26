@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-import { TextField, Button, List, ListItem, ListItemText, Typography, Box, Grid } from "@mui/material";
-import { addResponse } from "../api/responseApi";
+import {
+  TextField, Button, List, ListItem, ListItemText, Typography,
+  Box, Grid, Divider
+} from "@mui/material";
+import { addResponse, getDetailedResponses } from "../api/responseApi";
 
 export function ResponsePanel() {
   const [response, setResponse] = useState({
@@ -10,8 +13,15 @@ export function ResponsePanel() {
     selectedChoice: ""
   });
   const [responses, setResponses] = useState([]);
+  const [detailQuery, setDetailQuery] = useState({ studentId: "", testId: "" });
+  const [detailedResponses, setDetailedResponses] = useState([]);
+  const [detailError, setDetailError] = useState(null);
+  const [hasFetched, setHasFetched] = useState(false); // New flag
 
-  const handleChange = (e) => setResponse({ ...response, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setResponse({ ...response, [e.target.name]: e.target.value });
+  const handleDetailQueryChange = (e) =>
+    setDetailQuery({ ...detailQuery, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,9 +30,28 @@ export function ResponsePanel() {
     setResponse({ studentId: "", questionId: "", testId: "", selectedChoice: "" });
   };
 
+  const handleFetchDetailedResponses = async () => {
+    setHasFetched(true); // Mark after attempt
+    if (!detailQuery.studentId || !detailQuery.testId) {
+      setDetailError("Please enter Student ID and Test ID");
+      setDetailedResponses([]);
+      return;
+    }
+    try {
+      const data = await getDetailedResponses(detailQuery.studentId, detailQuery.testId);
+      setDetailedResponses(data);
+      setDetailError(null);
+    } catch {
+      setDetailError("Failed to fetch detailed responses");
+      setDetailedResponses([]);
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 500, mx: "auto", mt: 4 }}>
       <Typography variant="h5" gutterBottom>Response Panel</Typography>
+
+      {/* Add Response Form */}
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -42,6 +71,7 @@ export function ResponsePanel() {
           </Grid>
         </Grid>
       </Box>
+
       <List sx={{ mt: 3 }}>
         {responses.map((item) => (
           <ListItem key={item.id} divider>
@@ -49,6 +79,54 @@ export function ResponsePanel() {
           </ListItem>
         ))}
       </List>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Detailed Responses Query Section */}
+      <Typography variant="h6" gutterBottom>View Detailed Responses</Typography>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} sm={6}>
+          <TextField label="Student ID" name="studentId" value={detailQuery.studentId} onChange={handleDetailQueryChange} fullWidth type="number" />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField label="Test ID" name="testId" value={detailQuery.testId} onChange={handleDetailQueryChange} fullWidth type="number" />
+        </Grid>
+        <Grid item xs={12}>
+          <Button variant="outlined" onClick={handleFetchDetailedResponses} fullWidth>Load Detailed Responses</Button>
+        </Grid>
+      </Grid>
+
+      {detailError && (
+        <Typography color="error" sx={{ mb: 2 }}>{detailError}</Typography>
+      )}
+
+      {detailedResponses.length > 0 ? (
+        <Box sx={{ backgroundColor: "#f5f5f5", borderRadius: 1, p: 2 }}>
+          <List>
+            {detailedResponses.map((item, idx) => (
+              <ListItem key={idx} divider sx={{ backgroundColor: "#f5f5f5" }}>
+                <ListItemText
+                  primary={
+                    <Typography sx={{ color: "text.primary", fontWeight: "bold" }}>
+                      {item.questionText}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography sx={{ color: "text.secondary" }}>
+                      Student: <span style={{ color: "#1976d2", fontWeight: 500 }}>{item.studentName}</span>
+                      {" | "}Selected Answer: <span style={{ color: "#388e3c", fontWeight: 500 }}>{item.selectedChoice}</span>
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      ) : (
+        hasFetched && !detailError && (
+          <Typography sx={{ fontStyle: "italic", color: "red" }}>No detailed responses loaded.</Typography>
+        )
+      )}
     </Box>
   );
 }

@@ -6,7 +6,6 @@ import { StudentPanel } from "../components/StudentPanel";
 import { TestPanel } from "../components/TestPanel";
 import { TestPaperPanel } from "../components/TestPaperPanel";
 import { ResponsePanel } from "../components/ResponsePanel";
-import { ResultsPanel } from "../components/ResultsPanel";
 
 function TabPanel(props) {
   const { children, value, index } = props;
@@ -65,7 +64,6 @@ export function MenuTabs() {
       <Tab label="Test" />
       <Tab label="Test Paper" />
       <Tab label="Response" />
-      <Tab label="Results" />
     </Tabs>
   </AppBar>
 
@@ -77,7 +75,6 @@ export function MenuTabs() {
         <TabPanel value={selectedTab} index={3}><TestPanel /></TabPanel>
         <TabPanel value={selectedTab} index={4}><TestPaperPanel /></TabPanel>
         <TabPanel value={selectedTab} index={5}><ResponsePanel /></TabPanel>
-        <TabPanel value={selectedTab} index={6}><ResultsPanel /></TabPanel>
       </Container>
     </Box>
 

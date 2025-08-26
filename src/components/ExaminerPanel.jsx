@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
   TextField, Button, List, ListItem, ListItemText,
-  Typography, Box, Grid, Divider
+  Typography, Box, Grid, Divider, Paper
 } from "@mui/material";
 import {
   registerExaminer, modifyTestPaper, declareResults, checkCopies,
-  getTestsByExaminer
+  getTestsByExaminer, checkResults
 } from "../api/examinerApi";
 
 export function ExaminerPanel() {
@@ -21,11 +21,13 @@ export function ExaminerPanel() {
   const [copiesMessage, setCopiesMessage] = useState("");
   const [searchExaminerId, setSearchExaminerId] = useState("");
   const [examinerTests, setExaminerTests] = useState([]);
- 
+  const [checkResultParams, setCheckResultParams] = useState({ studentId: "", testId: "" });
+  const [checkedResult, setCheckedResult] = useState(null);
 
   // Register examiner
   const handleExaminerChange = (e) =>
     setExaminer({ ...examiner, [e.target.name]: e.target.value });
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     const registered = await registerExaminer(examiner);
@@ -36,6 +38,7 @@ export function ExaminerPanel() {
   // Modify test paper
   const handleTestPaperChange = (e) =>
     setTestPaper({ ...testPaper, [e.target.name]: e.target.value });
+
   const handleModifyTestPaper = async (e) => {
     e.preventDefault();
     const msg = await modifyTestPaper(testPaper);
@@ -58,12 +61,31 @@ export function ExaminerPanel() {
     setCopiesMessage(msg);
   };
 
-const handleFetchExaminerTests = async () => {
-  const tests = await getTestsByExaminer(searchExaminerId);
-  setExaminerTests(Array.isArray(tests) ? tests : []);
-};
+  // Fetch tests by examiner
+  const handleFetchExaminerTests = async () => {
+    const tests = await getTestsByExaminer(searchExaminerId);
+    setExaminerTests(Array.isArray(tests) ? tests : []);
+  };
 
+  // Check Results inputs change
+  const handleCheckResultsChange = (e) => {
+    setCheckResultParams({ ...checkResultParams, [e.target.name]: e.target.value });
+  };
 
+  // Fetch and set checked result
+  const handleCheckResultsSubmit = async () => {
+    if (!checkResultParams.studentId || !checkResultParams.testId) {
+      alert("Please enter both Student ID and Test ID");
+      return;
+    }
+    try {
+      const result = await checkResults(checkResultParams.studentId, checkResultParams.testId);
+      setCheckedResult(result);
+    } catch (error) {
+      alert("Result not found or error occurred");
+      setCheckedResult(null);
+    }
+  };
 
   return (
     <Box sx={{ maxWidth: 700, mx: "auto", mt: 3 }}>
@@ -84,6 +106,7 @@ const handleFetchExaminerTests = async () => {
         </Grid>
         <Button type="submit" variant="contained" sx={{ mt: 2 }}>Add Examiner</Button>
       </Box>
+
       <List>
         {examiners.map((item, i) => (
           <ListItem key={item.id || i} divider>
@@ -154,86 +177,156 @@ const handleFetchExaminerTests = async () => {
       {copiesMessage && <Typography color="info.main" sx={{ mb: 1 }}>{copiesMessage}</Typography>}
       <Divider sx={{ my: 2 }} />
 
-<Typography variant="subtitle1">View Tests By Examiner</Typography>
-<Grid container spacing={2} sx={{ mb: 2 }}>
-  <Grid item xs={12} sm={8}>
-    <TextField
-      label="Examiner ID"
-      value={searchExaminerId}
-      onChange={e => setSearchExaminerId(e.target.value)}
-      fullWidth
-      type="number"
-    />
-  </Grid>
-  <Grid item xs={12} sm={4}>
-    <Button
-      variant="outlined"
-      onClick={handleFetchExaminerTests}
-      fullWidth
-    >
-      Fetch Tests
-    </Button>
-  </Grid>
-</Grid>
-<List>
-  {Array.isArray(examinerTests) && examinerTests.length > 0 ? (
-    examinerTests.map((test) => (
-      <ListItem key={test.id} alignItems="flex-start" divider>
-        <ListItemText
-          primary={
-            <>
-              <Typography variant="h6" color="primary">{test.name}</Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                <span style={{ fontWeight: 500 }}>Test Code:</span> {test.testId}<br />
-                <span style={{ fontWeight: 500 }}>Examiner:</span> {test.examinerName || searchedExaminerName}<br />
-                <span style={{ fontWeight: 500 }}>Duration:</span> {test.duration} min<br />
-                <span style={{ fontWeight: 500 }}>Start Time:</span> {test.startTime}<br />
-                <span style={{ fontWeight: 500 }}>Number of Questions:</span> {test.numberOfQuestions}
-              </Typography>
-            </>
-          }
-          secondary={
-            test.students?.length > 0 && (
-              <span>
-                <Typography
-                  variant="body2"
-                  component="span"
-                  style={{ marginTop: 8 }}
-                  sx={{ fontWeight: "bold", display: "block", mt: 1 }}
-                >
-                  Students:
-                </Typography>
-                {test.students.map(s => (
-                  <span
-                    key={s.id}
-                    style={{
-                      display: "block",
-                      marginLeft: 16,
-                      marginTop: 8
-                    }}
-                  >
-                    <b>{s.name}</b> ({s.email})
-                  </span>
-                ))}
-              </span>
-            )
-          }
-        />
-      </ListItem>
-    ))
-  ) : (
-<Typography color="text.primary" align="left" sx={{ fontSize: '1.20rem' }}>
-  No tests found.
-</Typography>
-  )}
-</List>
-
-
-<Divider sx={{ my: 2 }} />
-    
-
+      {/* View Tests By Examiner */}
+      <Typography variant="subtitle1">View Tests By Examiner</Typography>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} sm={8}>
+          <TextField
+            label="Examiner ID"
+            value={searchExaminerId}
+            onChange={e => setSearchExaminerId(e.target.value)}
+            fullWidth
+            type="number"
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Button
+            variant="outlined"
+            onClick={handleFetchExaminerTests}
+            fullWidth
+          >
+            Fetch Tests
+          </Button>
+        </Grid>
+      </Grid>
       <List>
+        {Array.isArray(examinerTests) && examinerTests.length > 0 ? (
+          examinerTests.map((test) => (
+            <ListItem key={test.id} alignItems="flex-start" divider>
+              <ListItemText
+                primary={
+                  <>
+                    <Typography variant="h6" color="primary">{test.name}</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      <span style={{ fontWeight: 500 }}>Test Code:</span> {test.testId}<br />
+                      <span style={{ fontWeight: 500 }}>Examiner:</span> {test.examinerName || searchedExaminerName}<br />
+                      <span style={{ fontWeight: 500 }}>Duration:</span> {test.duration} min<br />
+                      <span style={{ fontWeight: 500 }}>Start Time:</span> {test.startTime}<br />
+                      <span style={{ fontWeight: 500 }}>Number of Questions:</span> {test.numberOfQuestions}
+                    </Typography>
+                  </>
+                }
+                secondary={
+                  test.students?.length > 0 && (
+                    <span>
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        style={{ marginTop: 8 }}
+                        sx={{ fontWeight: "bold", display: "block", mt: 1 }}
+                      >
+                        Students:
+                      </Typography>
+                      {test.students.map(s => (
+                        <span
+                          key={s.id}
+                          style={{
+                            display: "block",
+                            marginLeft: 16,
+                            marginTop: 8
+                          }}
+                        >
+                          <b>{s.name}</b> ({s.email})
+                        </span>
+                      ))}
+                    </span>
+                  )
+                }
+              />
+            </ListItem>
+          ))
+        ) : (
+          <Typography color="text.primary" align="left" sx={{ fontSize: '1.20rem' }}>
+            No tests found.
+          </Typography>
+        )}
       </List>
-    </Box>
+
+      <Divider sx={{ my: 2 }} />
+
+      {/* Check Student Result */}
+      <Typography variant="h6" gutterBottom>Check Student Result</Typography>
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Student ID"
+            name="studentId"
+            value={checkResultParams.studentId}
+            onChange={(e) =>
+              setCheckResultParams({ ...checkResultParams, [e.target.name]: e.target.value })
+            }
+            fullWidth
+            type="number"
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Test ID"
+            name="testId"
+            value={checkResultParams.testId}
+            onChange={(e) =>
+              setCheckResultParams({ ...checkResultParams, [e.target.name]: e.target.value })
+            }
+            fullWidth
+            type="number"
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Button variant="contained" fullWidth onClick={async () => {
+            if (!checkResultParams.studentId || !checkResultParams.testId) {
+              alert("Please enter both Student ID and Test ID");
+              return;
+            }
+            try {
+              const result = await checkResults(checkResultParams.studentId, checkResultParams.testId);
+              setCheckedResult(result);
+            } catch (error) {
+              alert("Result not found or error occurred");
+              setCheckedResult(null);
+            }
+          }}>
+            Check Result
+          </Button>
+        </Grid>
+      </Grid>
+ {checkedResult && (
+  <Box sx={{ mt: 2, p: 2, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+    <Typography
+      variant="subtitle1"
+      sx={{ fontWeight: "bold", color: "text.primary", mb: 1 }}
+    >
+      Student:&nbsp;
+      <span style={{ color: "#1976d2", fontWeight: "bold" }}>
+        {checkedResult.studentName && checkedResult.studentName.trim() !== ""
+          ? checkedResult.studentName
+          : <span style={{ color: "#d32f2f" }}>[Name not found]</span>}
+      </span>
+    </Typography>
+    <Typography sx={{ color: "text.primary" }}>
+      Grade: {checkedResult.grade ?? "—"}
+    </Typography>
+    <Typography sx={{ color: "text.primary" }}>
+      Marks: {checkedResult.marks ?? "—"}
+    </Typography>
+    <Typography sx={{ color: "text.primary" }}>
+      Test ID: {checkedResult.testId ?? "—"}
+    </Typography>
+  </Box>
+)}
+
+</Box>
   );
 }
+
+  
+

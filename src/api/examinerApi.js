@@ -32,6 +32,13 @@ export async function checkCopies(testId) {
   return response.text();
 }
 
+export async function checkResults(studentId, testId) {
+  const response = await fetch(`${BASE_URL}/results/${studentId}/${testId}`);
+  if (!response.ok) throw new Error("Result not found");
+  return response.json();
+}
+
+
 export async function getTestsByExaminer(examinerId) {
   const response = await fetch(`${BASE_URL}/tests/${examinerId}`);
   return response.json();
