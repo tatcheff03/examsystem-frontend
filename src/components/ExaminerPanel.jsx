@@ -1,14 +1,21 @@
 import React, { useState } from "react";
 import {
   TextField, Button, List, ListItem, ListItemText,
-  Typography, Box, Grid, Divider, Paper
+  Typography, Box, Grid, Divider
 } from "@mui/material";
-import {
-  registerExaminer, modifyTestPaper, declareResults, checkCopies,
-  getTestsByExaminer, checkResults
-} from "../api/examinerApi";
+import { useExaminerApi } from "../api/examinerApi"; // ✅ Correct import
 
-export function ExaminerPanel() {
+export default function ExaminerPanel() {
+  // ✅ Call the hook to get API functions
+  const {
+    registerExaminer,
+    modifyTestPaper,
+    declareResults,
+    checkCopies,
+    getTestsByExaminer,
+    checkResults,
+  } = useExaminerApi();
+
   const [examiner, setExaminer] = useState({ examinerId: "", name: "" });
   const [searchedExaminerName, setSearchedExaminerName] = useState("");
   const [examiners, setExaminers] = useState([]);
@@ -49,13 +56,13 @@ export function ExaminerPanel() {
     });
   };
 
-  // Declare results for test
+  // Declare results
   const handleDeclareResults = async () => {
     const msg = await declareResults(testId);
     setResultsMessage(msg);
   };
 
-  // Check copies for test
+  // Check copies
   const handleCheckCopies = async () => {
     const msg = await checkCopies(testId);
     setCopiesMessage(msg);
@@ -114,6 +121,7 @@ export function ExaminerPanel() {
           </ListItem>
         ))}
       </List>
+
       <Divider sx={{ my: 2 }} />
 
       {/* Modify Test Paper */}
@@ -155,6 +163,7 @@ export function ExaminerPanel() {
         </Grid>
         <Button type="submit" variant="outlined" sx={{ mt: 2 }}>Modify Test Paper</Button>
       </Box>
+
       <Divider sx={{ my: 2 }} />
 
       {/* Declare Results & Check Copies */}
@@ -165,16 +174,15 @@ export function ExaminerPanel() {
             fullWidth type="number" />
         </Grid>
         <Grid item xs={12} sm={3}>
-          <Button variant="contained" onClick={handleDeclareResults} fullWidth
-            sx={{ mt: { xs: 1, sm: 0 } }}>Declare Results</Button>
+          <Button variant="contained" onClick={handleDeclareResults} fullWidth>Declare Results</Button>
         </Grid>
         <Grid item xs={12} sm={3}>
-          <Button variant="outlined" onClick={handleCheckCopies} fullWidth
-            sx={{ mt: { xs: 1, sm: 0 } }}>Check Copies</Button>
+          <Button variant="outlined" onClick={handleCheckCopies} fullWidth>Check Copies</Button>
         </Grid>
       </Grid>
-      {resultsMessage && <Typography color="success.main" sx={{ mb: 1 }}>{resultsMessage}</Typography>}
-      {copiesMessage && <Typography color="info.main" sx={{ mb: 1 }}>{copiesMessage}</Typography>}
+      {resultsMessage && <Typography color="success.main">{resultsMessage}</Typography>}
+      {copiesMessage && <Typography color="info.main">{copiesMessage}</Typography>}
+
       <Divider sx={{ my: 2 }} />
 
       {/* View Tests By Examiner */}
@@ -190,15 +198,12 @@ export function ExaminerPanel() {
           />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Button
-            variant="outlined"
-            onClick={handleFetchExaminerTests}
-            fullWidth
-          >
+          <Button variant="outlined" onClick={handleFetchExaminerTests} fullWidth>
             Fetch Tests
           </Button>
         </Grid>
       </Grid>
+
       <List>
         {Array.isArray(examinerTests) && examinerTests.length > 0 ? (
           examinerTests.map((test) => (
@@ -208,34 +213,22 @@ export function ExaminerPanel() {
                   <>
                     <Typography variant="h6" color="primary">{test.name}</Typography>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      <span style={{ fontWeight: 500 }}>Test Code:</span> {test.testId}<br />
-                      <span style={{ fontWeight: 500 }}>Examiner:</span> {test.examinerName || searchedExaminerName}<br />
-                      <span style={{ fontWeight: 500 }}>Duration:</span> {test.duration} min<br />
-                      <span style={{ fontWeight: 500 }}>Start Time:</span> {test.startTime}<br />
-                      <span style={{ fontWeight: 500 }}>Number of Questions:</span> {test.numberOfQuestions}
+                      Test Code: {test.testId}<br />
+                      Examiner: {test.examinerName || searchedExaminerName}<br />
+                      Duration: {test.duration} min<br />
+                      Start Time: {test.startTime}<br />
+                      Number of Questions: {test.numberOfQuestions}
                     </Typography>
                   </>
                 }
                 secondary={
                   test.students?.length > 0 && (
                     <span>
-                      <Typography
-                        variant="body2"
-                        component="span"
-                        style={{ marginTop: 8 }}
-                        sx={{ fontWeight: "bold", display: "block", mt: 1 }}
-                      >
+                      <Typography variant="body2" component="span" sx={{ fontWeight: "bold", display: "block", mt: 1 }}>
                         Students:
                       </Typography>
                       {test.students.map(s => (
-                        <span
-                          key={s.id}
-                          style={{
-                            display: "block",
-                            marginLeft: 16,
-                            marginTop: 8
-                          }}
-                        >
+                        <span key={s.id} style={{ display: "block", marginLeft: 16, marginTop: 8 }}>
                           <b>{s.name}</b> ({s.email})
                         </span>
                       ))}
@@ -246,25 +239,21 @@ export function ExaminerPanel() {
             </ListItem>
           ))
         ) : (
-          <Typography color="text.primary" align="left" sx={{ fontSize: '1.20rem' }}>
-            No tests found.
-          </Typography>
+          <Typography color="text.primary">No tests found.</Typography>
         )}
       </List>
 
       <Divider sx={{ my: 2 }} />
 
       {/* Check Student Result */}
-      <Typography variant="h6" gutterBottom>Check Student Result</Typography>
+      <Typography variant="h6">Check Student Result</Typography>
       <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
         <Grid item xs={12} sm={4}>
           <TextField
             label="Student ID"
             name="studentId"
             value={checkResultParams.studentId}
-            onChange={(e) =>
-              setCheckResultParams({ ...checkResultParams, [e.target.name]: e.target.value })
-            }
+            onChange={handleCheckResultsChange}
             fullWidth
             type="number"
           />
@@ -274,59 +263,33 @@ export function ExaminerPanel() {
             label="Test ID"
             name="testId"
             value={checkResultParams.testId}
-            onChange={(e) =>
-              setCheckResultParams({ ...checkResultParams, [e.target.name]: e.target.value })
-            }
+            onChange={handleCheckResultsChange}
             fullWidth
             type="number"
           />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Button variant="contained" fullWidth onClick={async () => {
-            if (!checkResultParams.studentId || !checkResultParams.testId) {
-              alert("Please enter both Student ID and Test ID");
-              return;
-            }
-            try {
-              const result = await checkResults(checkResultParams.studentId, checkResultParams.testId);
-              setCheckedResult(result);
-            } catch (error) {
-              alert("Result not found or error occurred");
-              setCheckedResult(null);
-            }
-          }}>
+          <Button variant="contained" fullWidth onClick={handleCheckResultsSubmit}>
             Check Result
           </Button>
         </Grid>
       </Grid>
- {checkedResult && (
-  <Box sx={{ mt: 2, p: 2, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
-    <Typography
-      variant="subtitle1"
-      sx={{ fontWeight: "bold", color: "text.primary", mb: 1 }}
-    >
-      Student:&nbsp;
-      <span style={{ color: "#1976d2", fontWeight: "bold" }}>
-        {checkedResult.studentName && checkedResult.studentName.trim() !== ""
-          ? checkedResult.studentName
-          : <span style={{ color: "#d32f2f" }}>[Name not found]</span>}
-      </span>
-    </Typography>
-    <Typography sx={{ color: "text.primary" }}>
-      Grade: {checkedResult.grade ?? "—"}
-    </Typography>
-    <Typography sx={{ color: "text.primary" }}>
-      Marks: {checkedResult.marks ?? "—"}
-    </Typography>
-    <Typography sx={{ color: "text.primary" }}>
-      Test ID: {checkedResult.testId ?? "—"}
-    </Typography>
-  </Box>
-)}
 
-</Box>
+      {checkedResult && (
+        <Box sx={{ mt: 2, p: 2, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: "bold", color: "text.primary", mb: 1 }}>
+            Student:&nbsp;
+            <span style={{ color: "#1976d2", fontWeight: "bold" }}>
+              {checkedResult.studentName && checkedResult.studentName.trim() !== ""
+                ? checkedResult.studentName
+                : <span style={{ color: "#d32f2f" }}>[Name not found]</span>}
+            </span>
+          </Typography>
+          <Typography sx={{ color: "text.primary" }}>Grade: {checkedResult.grade ?? "—"}</Typography>
+          <Typography sx={{ color: "text.primary" }}>Marks: {checkedResult.marks ?? "—"}</Typography>
+          <Typography sx={{ color: "text.primary" }}>Test ID: {checkedResult.testId ?? "—"}</Typography>
+        </Box>
+      )}
+    </Box>
   );
 }
-
-  
-

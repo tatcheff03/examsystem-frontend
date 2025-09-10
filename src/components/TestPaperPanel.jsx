@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { TextField, Button, List, ListItem, ListItemText, Typography, Box, Grid } from "@mui/material";
-import { addTestPaper } from "../api/testPaperApi";
+import { useTestPapersApi } from "../api/testPaperApi"; // use the hook
 
-export function TestPaperPanel() {
+export default function TestPaperPanel() {
+  const { addTestPaper } = useTestPapersApi(); // ✅ get function from hook
+
   const [question, setQuestion] = useState({
     testId: "",
     question: "",
@@ -18,14 +20,28 @@ export function TestPaperPanel() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const saved = await addTestPaper(question);
-    setQuestions((prev) => [...prev, saved]);
-    setQuestion({ testId: "", question: "", choiceA: "", choiceB: "", choiceC: "", choiceD: "", correctChoice: "" });
+    try {
+      const saved = await addTestPaper(question); // call API via hook
+      setQuestions((prev) => [...prev, saved]);
+      setQuestion({
+        testId: "",
+        question: "",
+        choiceA: "",
+        choiceB: "",
+        choiceC: "",
+        choiceD: "",
+        correctChoice: ""
+      });
+    } catch (err) {
+      alert("Failed to add question. Check API connection.");
+      console.error(err);
+    }
   };
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
       <Typography variant="h5" gutterBottom>Test Paper Panel</Typography>
+
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -46,9 +62,10 @@ export function TestPaperPanel() {
           </Grid>
         </Grid>
       </Box>
+
       <List sx={{ mt: 3 }}>
-        {questions.map((item) => (
-          <ListItem key={item.id} divider>
+        {questions.map((item, index) => (
+          <ListItem key={item.id || index} divider>
             <ListItemText primary={item.question} secondary={`Correct: ${item.correctChoice} | Test ID: ${item.testId}`} />
           </ListItem>
         ))}

@@ -1,46 +1,30 @@
-const BASE_URL = "http://localhost:8080/student";
+import useAuthFetch from "./useAuthFetch.js";
 
-export async function registerStudent(student) {
-  const response = await fetch(`${BASE_URL}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(student),
-  });
-  return response.json();
-}
+const BASE_URL = "http://localhost:8081/student";
 
-export async function registerForTest(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/${studentId}/register/${testId}`, {
-    method: "POST",
-  });
-  return response.text();
-}
+export const useStudentApi = () => {
+  const fetchWithAuth = useAuthFetch(BASE_URL);
 
-export async function giveExam(studentId, testId, answers) {
-  const response = await fetch(`${BASE_URL}/${studentId}/give-exam/${testId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(answers),
-  });
-  return response.text();
-}
+  const registerStudent = (student) =>
+    fetchWithAuth("/register", { method: "POST", body: JSON.stringify(student) }, true);
 
-export async function getResults(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/${studentId}/results/${testId}`);
-  return response.json();
-}
+  const registerForTest = (studentId, testId) =>
+    fetchWithAuth(`/${studentId}/register/${testId}`, { method: "POST" }, false);
 
-export async function getTestPapersForTest(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/${studentId}/test-papers/${testId}`);
-  return response.json();
-}
+  const giveExam = (studentId, testId, answers) =>
+    fetchWithAuth(`/${studentId}/give-exam/${testId}`, { method: "POST", body: JSON.stringify(answers) }, true);
 
-export async function getResultsForStudent(studentId) {
-  const response = await fetch(`${BASE_URL}/${studentId}/results`);
-  return response.json();
-}
+  const getResults = (studentId, testId) =>
+    fetchWithAuth(`/${studentId}/results/${testId}`);
 
-export async function getResponses(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/${studentId}/responses/${testId}`);
-  return response.json();
-}
+  const getTestPapersForTest = (studentId, testId) =>
+    fetchWithAuth(`/${studentId}/test-papers/${testId}`);
+
+  const getResultsForStudent = (studentId) =>
+    fetchWithAuth(`/${studentId}/results`);
+
+  const getResponses = (studentId, testId) =>
+    fetchWithAuth(`/${studentId}/responses/${testId}`);
+
+  return { registerStudent, registerForTest, giveExam, getResults, getTestPapersForTest, getResultsForStudent, getResponses };
+};

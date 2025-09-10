@@ -1,20 +1,18 @@
-const BASE_URL = "http://localhost:8080/testpapers";
+import useAuthFetch from "./useAuthFetch.js";
 
-export async function addTestPaper(testPaper) {
-  const response = await fetch(`${BASE_URL}/add`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(testPaper),
-  });
-  return response.json();
-}
+const BASE_URL = "http://localhost:8081/testpapers";
 
-export async function getTestPapersByTestId(testId) {
-  const response = await fetch(`${BASE_URL}/test/${testId}`);
-  return response.json();
-}
+export const useTestPapersApi = () => {
+  const fetchWithAuth = useAuthFetch(BASE_URL);
 
-export async function getTestPaperById(id) {
-  const response = await fetch(`${BASE_URL}/${id}`);
-  return response.json();
-}
+  const addTestPaper = (testPaper) =>
+    fetchWithAuth("/add", { method: "POST", body: JSON.stringify(testPaper) }, true);
+
+  const getTestPapersByTestId = (testId) =>
+    fetchWithAuth(`/test/${testId}`);
+
+  const getTestPaperById = (id) =>
+    fetchWithAuth(`/${id}`);
+
+  return { addTestPaper, getTestPapersByTestId, getTestPaperById };
+};

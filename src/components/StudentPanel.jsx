@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { TextField, Button, List, ListItem, ListItemText, Typography, Box, Grid } from "@mui/material";
-import { registerStudent } from "../api/studentApi";
+import { useStudentApi } from "../api/studentApi";
 
-export function StudentPanel() {
+export default function StudentPanel() {
+  const { registerStudent } = useStudentApi();
+
   const [student, setStudent] = useState({
     studentId: "",
     name: "",
@@ -47,8 +49,8 @@ export function StudentPanel() {
         </Grid>
       </Box>
       <List sx={{ mt: 3 }}>
-        {students.map((item) => (
-          <ListItem key={item.id} divider>
+        {students.map((item, i) => (
+          <ListItem key={item.id || i} divider>
             <ListItemText primary={item.name} secondary={`Email: ${item.email} | ID: ${item.studentId}`} />
           </ListItem>
         ))}

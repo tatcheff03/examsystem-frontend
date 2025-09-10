@@ -1,33 +1,21 @@
-const BASE_URL = "http://localhost:8080/admin";
+import useAuthFetch from "./useAuthFetch.js";
 
-export async function sendInvite(email, testId) {
-  const response = await fetch(`${BASE_URL}/send-invite`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, testId }),
-  });
-  return response.text();
-}
+const BASE_URL = "/admin";
 
-export async function getAllAdmins() {
-  const response = await fetch(`${BASE_URL}/list`); // or whichever endpoint returns all admins
-  return response.json();
-}
+export const useAdminApi = () => {
+  const fetchWithAuth = useAuthFetch(BASE_URL);
 
-export async function registerAdmin(admin) {
-  const response = await fetch(`${BASE_URL}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(admin),
-  });
-  return response.json();
-}
+  const sendInvite = (email, testId) =>
+    fetchWithAuth("/send-invite", { method: "POST", body: JSON.stringify({ email, testId }) }, true);
 
-export async function sendResult(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/send-result`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ studentId, testId }),
-  });
-  return response.text();
-}
+  const getAllAdmins = () =>
+    fetchWithAuth("/list");
+
+  const registerAdmin = (admin) =>
+    fetchWithAuth("/register", { method: "POST", body: JSON.stringify(admin) }, true);
+
+  const sendResult = (studentId, testId) =>
+    fetchWithAuth("/send-result", { method: "POST", body: JSON.stringify({ studentId, testId }) }, true);
+
+  return { sendInvite, getAllAdmins, registerAdmin, sendResult };
+};

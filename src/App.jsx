@@ -1,5 +1,5 @@
-import { MenuTabs } from "./nav/TabPanel";
 import "./App.css";
+import MenuTabs from "./nav/TabPanel"; 
 
 function App() {
   return (

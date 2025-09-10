@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
   TextField, Button, List, ListItem, ListItemText,
-  Typography, Box, Grid, Divider
+  Typography, Box, Divider, Grid
 } from "@mui/material";
-import {
-  sendInvite, registerAdmin, sendResult, getAllAdmins
-} from "../api/adminApi";
+import { useAdminApi } from "../api/adminApi";
 
-export function AdminPanel() {
+export default function AdminPanel() {
+  const { sendInvite, registerAdmin, sendResult, getAllAdmins } = useAdminApi();
+
   const [admin, setAdmin] = useState({ adminId: "", name: "", email: "", contactNumber: "" });
   const [admins, setAdmins] = useState([]);
   const [inviteData, setInviteData] = useState({ email: "", testId: "" });
@@ -15,74 +15,90 @@ export function AdminPanel() {
   const [resultData, setResultData] = useState({ studentId: "", testId: "" });
   const [resultMessage, setResultMessage] = useState("");
 
-  // Fetch admins on mount
+  // Fetch admins once on mount
   useEffect(() => {
     async function loadAdmins() {
-      const data = await getAllAdmins();
-      setAdmins(data);
+      try {
+        const data = await getAllAdmins();
+        setAdmins(data);
+      } catch (err) {
+        console.error("Failed to load admins:", err);
+      }
     }
     loadAdmins();
-  }, []);
+  }, []); // ✅ empty dependency → fetch only once
 
-  // Admin Registration Handlers
   const handleAdminChange = (e) => setAdmin({ ...admin, [e.target.name]: e.target.value });
   const handleRegister = async (e) => {
     e.preventDefault();
-    const registered = await registerAdmin(admin);
-    // re-fetch admins from backend for always-fresh list
-    const updatedAdmins = await getAllAdmins();
-    setAdmins(updatedAdmins);
-    setAdmin({ adminId: "", name: "", email: "" , contactNumber: "" });
+    try {
+      await registerAdmin(admin);
+      const updatedAdmins = await getAllAdmins();
+      setAdmins(updatedAdmins);
+      setAdmin({ adminId: "", name: "", email: "", contactNumber: "" });
+    } catch (err) {
+      console.error("Failed to register admin:", err);
+    }
   };
 
-  // Send Invite Handlers
   const handleInviteChange = (e) => setInviteData({ ...inviteData, [e.target.name]: e.target.value });
   const handleSendInvite = async () => {
     if (!inviteData.email || !inviteData.testId) {
       setInviteMessage("Please enter both Email and Test ID.");
       return;
     }
-    const msg = await sendInvite(inviteData.email, Number(inviteData.testId));
-    setInviteMessage(msg);
-    setInviteData({ email: "", testId: "" });
+    try {
+      const msg = await sendInvite(inviteData.email, Number(inviteData.testId));
+      setInviteMessage(msg);
+      setInviteData({ email: "", testId: "" });
+    } catch (err) {
+      setInviteMessage("Failed to send invite.");
+      console.error(err);
+    }
   };
 
-  // Send Result Handlers
   const handleResultChange = (e) => setResultData({ ...resultData, [e.target.name]: e.target.value });
   const handleSendResult = async () => {
     if (!resultData.studentId || !resultData.testId) {
       setResultMessage("Please enter both Student ID and Test ID.");
       return;
     }
-    const msg = await sendResult(Number(resultData.studentId), Number(resultData.testId));
-    setResultMessage(msg);
-    setResultData({ studentId: "", testId: "" });
+    try {
+      const msg = await sendResult(Number(resultData.studentId), Number(resultData.testId));
+      setResultMessage(msg);
+      setResultData({ studentId: "", testId: "" });
+    } catch (err) {
+      setResultMessage("Failed to send result.");
+      console.error(err);
+    }
   };
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
-      <Typography variant="h5" gutterBottom>Admin Panel</Typography>
+      <Typography variant="h5" gutterBottom sx={{ color: "primary.main" }}>
+        Admin Panel
+      </Typography>
 
       {/* Register Admin */}
       <Box component="form" onSubmit={handleRegister} noValidate sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>Register New Admin</Typography>
+        <Typography variant="h6" gutterBottom sx={{ color: "secondary.main" }}>
+          Register New Admin
+        </Typography>
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid sx={{ flex: 1, minWidth: 0.5 }}>
             <TextField label="Admin ID" name="adminId" value={admin.adminId} onChange={handleAdminChange} fullWidth type="number" />
           </Grid>
-          <Grid item xs={6}>
+          <Grid sx={{ flex: 1, minWidth: 0.5 }}>
             <TextField label="Name" name="name" value={admin.name} onChange={handleAdminChange} fullWidth />
           </Grid>
-          <Grid item xs={6}>
+          <Grid sx={{ flex: 1, minWidth: 0.5 }}>
             <TextField label="Email" name="email" value={admin.email} onChange={handleAdminChange} fullWidth type="email" />
           </Grid>
-          <Grid item xs={6}>
+          <Grid sx={{ flex: 1, minWidth: 0.5 }}>
             <TextField label="Contact Number" name="contactNumber" value={admin.contactNumber} onChange={handleAdminChange} fullWidth />
           </Grid>
-          <Grid item xs={12}>
-            <Button type="submit" variant="contained" fullWidth>
-              Register Admin
-            </Button>
+          <Grid sx={{ width: '100%' }}>
+            <Button type="submit" variant="contained" fullWidth>Register Admin</Button>
           </Grid>
         </Grid>
       </Box>
@@ -90,30 +106,20 @@ export function AdminPanel() {
       <Divider sx={{ my: 2 }} />
 
       {/* Admin List */}
-<Typography sx={{ color: '#4343e4ff' }} variant="h6" gutterBottom> Registered Admins </Typography>
+      <Typography variant="h6" gutterBottom sx={{ color: "secondary.main" }}>Registered Admins</Typography>
       <List sx={{ mb: 4 }}>
         {admins.length === 0 ? (
           <ListItem>
-            <ListItemText
-              primary={
-                <Typography color="text.primary">
-                  No registered admins.
-                </Typography>
-              }
-            />
+            <ListItemText primary="No registered admins." primaryTypographyProps={{ color: 'text.primary', fontWeight: 500 }} />
           </ListItem>
         ) : (
           admins.map((item) => (
             <ListItem key={item.id || item.adminId}>
               <ListItemText
-                primary={
-                  <Typography color="text.primary">{item.name}</Typography>
-                }
-                secondary={
-                  <Typography color="text.secondary">
-                   Email: {item.email}
-                  </Typography>
-                }
+                primary={item.name}
+                secondary={`Email: ${item.email}`}
+                primaryTypographyProps={{ color: 'text.primary', fontWeight: 600 }}
+                secondaryTypographyProps={{ color: 'text.secondary' }}
               />
             </ListItem>
           ))
@@ -124,53 +130,35 @@ export function AdminPanel() {
 
       {/* Send Invite */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>Send Exam Invite</Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={6}>
-            <TextField
-              label="Email"
-              name="email"
-              value={inviteData.email}
-              onChange={handleInviteChange}
-              fullWidth
-              type="email"
-            />
+        <Typography variant="h6" gutterBottom sx={{ color: "secondary.main" }}>Send Exam Invite</Typography>
+        <Grid container spacing={2}>
+          <Grid sx={{ flex: 1, minWidth: '45%' }}>
+            <TextField label="Email" name="email" value={inviteData.email} onChange={handleInviteChange} fullWidth type="email" />
           </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="Test ID"
-              name="testId"
-              value={inviteData.testId}
-              onChange={handleInviteChange}
-              fullWidth
-              type="number"
-            />
+          <Grid sx={{ flex: 1, minWidth: '45%' }}>
+            <TextField label="Test ID" name="testId" value={inviteData.testId} onChange={handleInviteChange} fullWidth type="number" />
           </Grid>
-          <Grid item xs={12} sx={{ mt: 2 }}>
-            <Button variant="contained" fullWidth onClick={handleSendInvite}>
-              Send Invite
-            </Button>
+          <Grid sx={{ width: '100%' }}>
+            <Button variant="contained" fullWidth onClick={handleSendInvite}>Send Invite</Button>
           </Grid>
         </Grid>
-        {inviteMessage && <Typography color="primary" sx={{ mt: 2 }}>{inviteMessage}</Typography>}
+        {inviteMessage && <Typography color="success.main" sx={{ mt: 2 }}>{inviteMessage}</Typography>}
       </Box>
 
       <Divider sx={{ my: 2 }} />
 
       {/* Send Result */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>Send Exam Result Email</Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={6}>
+        <Typography variant="h6" gutterBottom sx={{ color: "secondary.main" }}>Send Exam Result Email</Typography>
+        <Grid container spacing={2}>
+          <Grid sx={{ flex: 1, minWidth: '45%' }}>
             <TextField label="Student ID" name="studentId" value={resultData.studentId} onChange={handleResultChange} fullWidth type="number" />
           </Grid>
-          <Grid item xs={6}>
+          <Grid sx={{ flex: 1, minWidth: '45%' }}>
             <TextField label="Test ID" name="testId" value={resultData.testId} onChange={handleResultChange} fullWidth type="number" />
           </Grid>
-          <Grid item xs={12} sx={{ mt: 2 }}>
-            <Button variant="contained" fullWidth onClick={handleSendResult}>
-              Send Result
-            </Button>
+          <Grid sx={{ width: '100%' }}>
+            <Button variant="contained" fullWidth onClick={handleSendResult}>Send Result</Button>
           </Grid>
         </Grid>
         {resultMessage && <Typography color="success.main" sx={{ mt: 2 }}>{resultMessage}</Typography>}

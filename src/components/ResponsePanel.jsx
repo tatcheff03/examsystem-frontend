@@ -3,9 +3,11 @@ import {
   TextField, Button, List, ListItem, ListItemText, Typography,
   Box, Grid, Divider
 } from "@mui/material";
-import { addResponse, getDetailedResponses } from "../api/responseApi";
+import { useResponsesApi } from "../api/responseApi"; 
 
-export function ResponsePanel() {
+export default function ResponsePanel() {
+  const { addResponse, getDetailedResponses } = useResponsesApi(); 
+
   const [response, setResponse] = useState({
     studentId: "",
     questionId: "",
@@ -16,32 +18,39 @@ export function ResponsePanel() {
   const [detailQuery, setDetailQuery] = useState({ studentId: "", testId: "" });
   const [detailedResponses, setDetailedResponses] = useState([]);
   const [detailError, setDetailError] = useState(null);
-  const [hasFetched, setHasFetched] = useState(false); // New flag
+  const [hasFetched, setHasFetched] = useState(false);
 
   const handleChange = (e) =>
     setResponse({ ...response, [e.target.name]: e.target.value });
+
   const handleDetailQueryChange = (e) =>
     setDetailQuery({ ...detailQuery, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const saved = await addResponse(response);
-    setResponses((prev) => [...prev, saved]);
-    setResponse({ studentId: "", questionId: "", testId: "", selectedChoice: "" });
+    try {
+      const saved = await addResponse(response); // ✅ call via hook
+      setResponses((prev) => [...prev, saved]);
+      setResponse({ studentId: "", questionId: "", testId: "", selectedChoice: "" });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add response.");
+    }
   };
 
   const handleFetchDetailedResponses = async () => {
-    setHasFetched(true); // Mark after attempt
+    setHasFetched(true);
     if (!detailQuery.studentId || !detailQuery.testId) {
       setDetailError("Please enter Student ID and Test ID");
       setDetailedResponses([]);
       return;
     }
     try {
-      const data = await getDetailedResponses(detailQuery.studentId, detailQuery.testId);
+      const data = await getDetailedResponses(detailQuery.studentId, detailQuery.testId); 
       setDetailedResponses(data);
       setDetailError(null);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setDetailError("Failed to fetch detailed responses");
       setDetailedResponses([]);
     }

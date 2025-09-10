@@ -1,25 +1,21 @@
-const BASE_URL = "http://localhost:8080/tests";
+import useAuthFetch from "./useAuthFetch.js";
 
-export async function addTest(test) {
-  const response = await fetch(`${BASE_URL}/add`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(test),
-  });
-  return response.json();
-}
+const BASE_URL = "http://localhost:8081/tests";
 
-export async function getAllTests() {
-  const response = await fetch(`${BASE_URL}/`);
-  return response.json();
-}
+export const useTestsApi = () => {
+  const fetchWithAuth = useAuthFetch(BASE_URL);
 
-export async function getTestsByExaminer(examinerId) {
-  const response = await fetch(`${BASE_URL}/examiner/${examinerId}`);
-  return response.json();
-}
+  const addTest = (test) =>
+    fetchWithAuth("/add", { method: "POST", body: JSON.stringify(test) }, true);
 
-export async function getTestById(id) {
-  const response = await fetch(`${BASE_URL}/${id}`);
-  return response.json();
-}
+  const getAllTests = () =>
+    fetchWithAuth("/");
+
+  const getTestsByExaminer = (examinerId) =>
+    fetchWithAuth(`/examiner/${examinerId}`);
+
+  const getTestById = (id) =>
+    fetchWithAuth(`/${id}`);
+
+  return { addTest, getAllTests, getTestsByExaminer, getTestById };
+};

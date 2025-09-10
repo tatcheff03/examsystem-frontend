@@ -1,16 +1,15 @@
-const BASE_URL = "http://localhost:8080/responses";
+import useAuthFetch from "./useAuthFetch.js";
 
-export async function addResponse(response) {
-  const res = await fetch(`${BASE_URL}/add`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(response),
-  });
-  return res.json();
-}
+const BASE_URL = "http://localhost:8081/responses";
 
-export async function getDetailedResponses(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/detailed/${studentId}/${testId}`);
-  if (!response.ok) throw new Error("Failed to fetch detailed responses");
-  return response.json();
-}
+export const useResponsesApi = () => {
+  const fetchWithAuth = useAuthFetch(BASE_URL);
+
+  const addResponse = (responseData) =>
+    fetchWithAuth("/add", { method: "POST", body: JSON.stringify(responseData) }, true);
+
+  const getDetailedResponses = (studentId, testId) =>
+    fetchWithAuth(`/detailed/${studentId}/${testId}`);
+
+  return { addResponse, getDetailedResponses };
+};

@@ -1,46 +1,27 @@
-const BASE_URL = "http://localhost:8080/examiner";
+import useAuthFetch from "./useAuthFetch.js";
 
-export async function registerExaminer(examiner) {
-  const response = await fetch(`${BASE_URL}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(examiner),
-  });
-  return response.json();
-}
+const BASE_URL = "http://localhost:8081/examiner";
 
-export async function modifyTestPaper(testPaper) {
-  const response = await fetch(`${BASE_URL}/test-papers`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(testPaper),
-  });
-  return response.text();
-}
+export const useExaminerApi = () => {
+  const fetchWithAuth = useAuthFetch(BASE_URL);
 
-export async function declareResults(testId) {
-  const response = await fetch(`${BASE_URL}/tests/${testId}/declare-results`, {
-    method: "POST",
-  });
-  return response.text();
-}
+  const registerExaminer = (examiner) =>
+    fetchWithAuth("/register", { method: "POST", body: JSON.stringify(examiner) }, true);
 
-export async function checkCopies(testId) {
-  const response = await fetch(`${BASE_URL}/tests/${testId}/check-copies`, {
-    method: "POST",
-  });
-  return response.text();
-}
+  const modifyTestPaper = (testPaper) =>
+    fetchWithAuth("/test-papers", { method: "PUT", body: JSON.stringify(testPaper) }, true);
 
-export async function checkResults(studentId, testId) {
-  const response = await fetch(`${BASE_URL}/results/${studentId}/${testId}`);
-  if (!response.ok) throw new Error("Result not found");
-  return response.json();
-}
+  const declareResults = (testId) =>
+    fetchWithAuth(`/tests/${testId}/declare-results`, { method: "POST" }, false);
 
+  const checkCopies = (testId) =>
+    fetchWithAuth(`/tests/${testId}/check-copies`, { method: "POST" }, false);
 
-export async function getTestsByExaminer(examinerId) {
-  const response = await fetch(`${BASE_URL}/tests/${examinerId}`);
-  return response.json();
-}
+  const checkResults = (studentId, testId) =>
+    fetchWithAuth(`/results/${studentId}/${testId}`);
 
+  const getTestsByExaminer = (examinerId) =>
+    fetchWithAuth(`/tests/${examinerId}`);
+
+  return { registerExaminer, modifyTestPaper, declareResults, checkCopies, checkResults, getTestsByExaminer };
+};
